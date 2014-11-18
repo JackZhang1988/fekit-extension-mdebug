@@ -1,4 +1,3 @@
-fekit-extension-mdebug
-======================
+Fekit Mobile Debug
 
-mobile debug config for fekit
+

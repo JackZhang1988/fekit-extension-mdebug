@@ -1,0 +1,18 @@
+{
+    "fekit_extension_command_name":"mdebug",
+    "name": "fekit-extension-mdebug",
+    "version": "0.0.1",
+    "description": "mobile debug for fekit project",
+    "dependencies": {
+        "weinre": "*"
+    },
+    "main": "index.js",
+    "scripts": {},
+    "repository": "",
+    "author": "",
+    "license": "BSD",
+    "scripts":{
+        "postinstall":"node ./scripts/postinstall.js",
+        "preuninstall":"node ./scripts/preuninstall.js"
+    }
+}

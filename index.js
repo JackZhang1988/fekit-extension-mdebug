@@ -4,14 +4,17 @@ var os=require('os');
 var ifaces=os.networkInterfaces();
 var baselib = syspath.join( module.parent.filename , '../' );
 var utils = require( syspath.join( baselib , 'util'  ) );
-// var mdebug = require('./mdebug.js');
+var weinre = require('weinre');
 
-
-var LINK_REG=/<[link|script].*[href|src]=.*(\/\/qunarzz.com\/).*>$/ig;
+var linkTag='qunarzz.com';
+var LINK_REG=/<[link|script].*[href|src]=.*(\/\/qunarzz.com\/)([\s\S]*)>$/ig;
 var IP = getLocalHost()[0];
 var PORT;
-var WEINRE_SERVER= 8090;
+var localhostAddr;
+var WEINRE_SERVER= 9001;
+var currentStatus='add'; // 当前默认状态
 
+// 得到本机ip地址，默认取第一个
 function getLocalHost(){
 	var localIpList=[];
 	for (var dev in ifaces) {
@@ -27,19 +30,20 @@ function getLocalHost(){
 	return localIpList;
 }
 
-function replaceLink(htmlFile,path){
-	htmlFile.replace(LINK_REG,function(match){
-		return match.replace(/qunarzz.com/ig,PORT? (IP+':'+PORT):IP);
+function replaceLink(htmlFile, replaceReg, replaceStr){
+	var localhost =PORT? (IP+':'+PORT):IP;
+	var result = htmlFile.replace(LINK_REG,function(match){
+		return match.replace(replaceReg,replaceStr);
 	});
-	return htmlFile;
-}
-
+	console.log('replaced html: ',result);
+	return result;
+}	
 
 exports.usage = "替换qunarzz为本机ip，方便手机访问，增加weinre库";
 
 exports.set_options = function( optimist ){
 	optimist.alias('i','ip');
-	optionst.describe('ip','指定转换的IP地址')
+	optimist.describe('ip','指定转换的IP地址')
     optimist.alias('p', 'port');
     optimist.describe('port', '指定端口号');
     optimist.alias('w','weinre');
@@ -48,26 +52,56 @@ exports.set_options = function( optimist ){
 	optimist.describe('revert','revert html 文件，替换本地ip为qunarzz, 移除weinre');
     return optimist
 }
-
-exports.run = function( options ){
-	if(options.revert){
-		return;
+function run( options ){
+	if(options.i){
+		IP = options.i;
 	}
-	if(options.ip){
-		IP = options.ip;
+	if(options.p){
+		PORT = options.p;
 	}
-	if(options.port){
-		PORT = options.port;
+	localhostAddr = PORT? (IP+':'+PORT):IP;
+	if(options.r){
+		// revert 状态
+		currentStatus='revert';
+		LINK_REG=new RegExp("<[link|script].*[href|src]=.*(\\/\\/"+localhostAddr+"\\/)([\\s\\S]*)>$","ig");
 	}
 	utils.logger.log('mobile debug 启动');
 	utils.path.each_directory( process.cwd() ,function(path){
-		if( syspath.extname(path) !== '.html' || syspath.extname(path) !== '.htm') return;
-		var htmlFile = replaceLink(s.readFileSync(path).toString(),path);
-		if(options.weinre){
-			htmlFile + ="<script id='weinreServer'>\n  var url = 'http://'+location.host.replace(/\:\\d+/, '') +':9001'+ '/target/target-script-min.js#anonymous' \n  var script = document.createElement('script');\n  script.src = url;\n  var head = document.head;\n  if(head){\n    head.appendChild(script);\n  }\n  \n</script>";
+		console.log(syspath.extname(path));
+		if( syspath.extname(path) !== '.html' && syspath.extname(path) !== '.htm') return;
+		var htmlFile = result = fs.readFileSync(path).toString();
+		if(currentStatus=='add'){
+			result = replaceLink(htmlFile,new RegExp(linkTag,'ig'),localhostAddr);
+			if(options.w){
+				// 植入weinre js代码
+				result +="\n <script id='weinreServer'>\n  var url = 'http://'+location.host.replace(/\:\\d+/, '') +':9001'+ '/target/target-script-min.js#anonymous' \n  var script = document.createElement('script');\n  script.src = url;\n  var head = document.head;\n  if(head){\n    head.appendChild(script);\n  }\n  \n</script>";
+			}
+		}else if(currentStatus == 'revert'){
+			//ip地址改为qunarzz.com, 同时去除weinre
+			result = replaceLink(htmlFile,new RegExp(localhostAddr,'ig'),linkTag);
+			result.replace(/<script\sid=\'weinreServer'>[\s\S]*<\/script>/gi,'');
 		}
 		fs.writeFileSync(path,result);
 
-		utils.logger.log('done');
 	},true);
 }
+var opts;
+function test(options){
+	opts=options;
+	run(options);
+	if(options.w){
+		// 启动weinre服务器
+		weinre.run({
+			httpPort: 9001,
+			boundHost: '-all-',
+			verbose: false,
+			debug: false,
+			readTimeout: 20,
+			deathTimeout: 50
+		});
+		utils.logger.log('weinre run at localhost:9001');
+	}
+
+	utils.logger.log('done');
+}
+exports.run = test;

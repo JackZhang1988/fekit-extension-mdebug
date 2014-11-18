@@ -1,18 +1,30 @@
 {
-    "fekit_extension_command_name":"mdebug",
-    "name": "fekit-extension-mdebug",
-    "version": "0.0.1",
-    "description": "mobile debug for fekit project",
-    "dependencies": {
-        "weinre": "*"
-    },
-    "main": "index.js",
-    "scripts": {},
-    "repository": "",
-    "author": "",
-    "license": "BSD",
-    "scripts":{
-        "postinstall":"node ./scripts/postinstall.js",
-        "preuninstall":"node ./scripts/preuninstall.js"
-    }
+  "fekit_extension_command_name": "mdebug",
+  "name": "fekit-extension-mdebug",
+  "version": "0.0.1",
+  "description": "mobile debug for fekit project",
+  "dependencies": {
+    "weinre": "*"
+  },
+  "main": "index.js",
+  "scripts": {
+    "postinstall": "node ./scripts/postinstall.js",
+    "preuninstall": "node ./scripts/preuninstall.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/JackZhang1988/fekit-extension-mdebug.git"
+  },
+  "author": {
+    "name": "jianbo1988"
+  },
+  "license": "BSD",
+  "readme": "Fekit Mobile Debug\r\n\r\n\r\n",
+  "readmeFilename": "README.md",
+  "bugs": {
+    "url": "https://github.com/JackZhang1988/fekit-extension-mdebug/issues"
+  },
+  "homepage": "https://github.com/JackZhang1988/fekit-extension-mdebug",
+  "_id": "fekit-extension-mdebug@0.0.1",
+  "_from": "fekit-extension-mdebug@"
 }

@@ -38,7 +38,23 @@ function replaceLink(htmlFile, replaceReg, replaceStr){
 	console.log('replaced html: ',result);
 	return result;
 }	
-
+function handleFile(path){
+	utils.logger.log(syspath.extname(path));
+	if( syspath.extname(path) !== '.html' && syspath.extname(path) !== '.htm') return;
+	var htmlFile = result = fs.readFileSync(path).toString();
+	if(currentStatus=='add'){
+		result = replaceLink(htmlFile,new RegExp(linkTag,'ig'),localhostAddr);
+		if(options.w){
+			// 植入weinre js代码
+			result +="\n <script id='weinreServer'>\n  var url = 'http://'+location.host.replace(/\:\\d+/, '') +':9001'+ '/target/target-script-min.js#anonymous' \n  var script = document.createElement('script');\n  script.src = url;\n  var head = document.head;\n  if(head){\n    head.appendChild(script);\n  }\n  \n</script>";
+		}
+	}else if(currentStatus == 'revert'){
+		//ip地址改为qunarzz.com, 同时去除weinre
+		result = replaceLink(htmlFile,new RegExp(localhostAddr,'ig'),linkTag);
+		result.replace(/<script\sid=\'weinreServer'>[\s\S]*<\/script>/gi,'');
+	}
+	fs.writeFileSync(path,result);
+}
 exports.usage = "替换qunarzz为本机ip，方便手机访问，增加weinre库";
 
 exports.set_options = function( optimist ){
@@ -50,6 +66,8 @@ exports.set_options = function( optimist ){
     optimist.describe('weinre','添加weinre server')
 	optimist.alias('r','revert');
 	optimist.describe('revert','revert html 文件，替换本地ip为qunarzz, 移除weinre');
+	optimist.alias('f','file');
+	optimist.describe('file','指定要替换的文件');
     return optimist
 }
 function run( options ){
@@ -66,28 +84,15 @@ function run( options ){
 		LINK_REG=new RegExp("<[link|script].*[href|src]=.*(\\/\\/"+localhostAddr+"\\/)([\\s\\S]*)>$","ig");
 	}
 	utils.logger.log('mobile debug 启动');
+	if(options.f){
+		handleFile(options.f);
+		return;
+	}
 	utils.path.each_directory( process.cwd() ,function(path){
-		console.log(syspath.extname(path));
-		if( syspath.extname(path) !== '.html' && syspath.extname(path) !== '.htm') return;
-		var htmlFile = result = fs.readFileSync(path).toString();
-		if(currentStatus=='add'){
-			result = replaceLink(htmlFile,new RegExp(linkTag,'ig'),localhostAddr);
-			if(options.w){
-				// 植入weinre js代码
-				result +="\n <script id='weinreServer'>\n  var url = 'http://'+location.host.replace(/\:\\d+/, '') +':9001'+ '/target/target-script-min.js#anonymous' \n  var script = document.createElement('script');\n  script.src = url;\n  var head = document.head;\n  if(head){\n    head.appendChild(script);\n  }\n  \n</script>";
-			}
-		}else if(currentStatus == 'revert'){
-			//ip地址改为qunarzz.com, 同时去除weinre
-			result = replaceLink(htmlFile,new RegExp(localhostAddr,'ig'),linkTag);
-			result.replace(/<script\sid=\'weinreServer'>[\s\S]*<\/script>/gi,'');
-		}
-		fs.writeFileSync(path,result);
-
+		handleFile(path);
 	},true);
 }
-var opts;
-function test(options){
-	opts=options;
+function main(options){
 	run(options);
 	if(options.w){
 		// 启动weinre服务器
@@ -104,4 +109,4 @@ function test(options){
 
 	utils.logger.log('done');
 }
-exports.run = test;
+exports.run = main;

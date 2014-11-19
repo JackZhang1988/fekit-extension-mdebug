@@ -7,7 +7,7 @@ var utils = require( syspath.join( baselib , 'util'  ) );
 var weinre = require('weinre');
 
 var linkTag='qunarzz.com';
-var LINK_REG=/<[link|script].*[href|src]=.*(\/\/qunarzz.com\/)([\s\S]*)>$/ig;
+var LINK_REG=/<[link|script].*[href|src]=.*(\/\/qunarzz.com\/)([\s\S]*)>/ig;
 var IP = getLocalHost()[0];
 var PORT;
 var localhostAddr;
@@ -19,10 +19,8 @@ function getLocalHost(){
 	var localIpList=[];
 	for (var dev in ifaces) {
 	  var alias=0;
-	  // console.log('dev ',ifaces[dev]);
 	  ifaces[dev].forEach(function(details){
 	    if (details.family=='IPv4' && details.internal == false) {
-	      // console.log(dev,details.address);
 	      localIpList.push(details.address);
 	    }
 	  });
@@ -35,13 +33,14 @@ function replaceLink(htmlFile, replaceReg, replaceStr){
 	var result = htmlFile.replace(LINK_REG,function(match){
 		return match.replace(replaceReg,replaceStr);
 	});
-	console.log('replaced html: ',result);
+	// console.log('replaced html: ',result);
 	return result;
 }	
-function handleFile(path){
-	utils.logger.log(syspath.extname(path));
+function handleFile(path,options){
+	utils.logger.log(path);
 	if( syspath.extname(path) !== '.html' && syspath.extname(path) !== '.htm') return;
 	var htmlFile = result = fs.readFileSync(path).toString();
+	if(!LINK_REG.test(htmlFile)) return;
 	if(currentStatus=='add'){
 		result = replaceLink(htmlFile,new RegExp(linkTag,'ig'),localhostAddr);
 		if(options.w){
@@ -81,15 +80,15 @@ function run( options ){
 	if(options.r){
 		// revert 状态
 		currentStatus='revert';
-		LINK_REG=new RegExp("<[link|script].*[href|src]=.*(\\/\\/"+localhostAddr+"\\/)([\\s\\S]*)>$","ig");
+		LINK_REG=new RegExp("<[link|script].*[href|src]=.*(\\/\\/"+localhostAddr+"\\/)([\\s\\S]*)>","ig");
 	}
 	utils.logger.log('mobile debug 启动');
 	if(options.f){
-		handleFile(options.f);
+		handleFile(options.f,options);
 		return;
 	}
 	utils.path.each_directory( process.cwd() ,function(path){
-		handleFile(path);
+		handleFile(path,options);
 	},true);
 }
 function main(options){
@@ -106,7 +105,6 @@ function main(options){
 		});
 		utils.logger.log('weinre run at localhost:9001');
 	}
-
 	utils.logger.log('done');
 }
 exports.run = main;

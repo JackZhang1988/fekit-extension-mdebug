@@ -1,7 +1,7 @@
 {
   "fekit_extension_command_name": "mdebug",
   "name": "fekit-extension-mdebug",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "mobile debug for fekit project",
   "dependencies": {
     "weinre": "*"

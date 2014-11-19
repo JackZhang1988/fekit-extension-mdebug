@@ -15,3 +15,4 @@ Fekit Mobile Debug
 	-p 指定端口号，默认80端口
 	-w 增加weinre
 	-r revert到最初版本
+	-f 指定单个html文件路径
